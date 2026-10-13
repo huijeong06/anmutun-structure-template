@@ -24,7 +24,6 @@
   .start .save-btn:hover{background:var(--green-d)}
   .start-t{margin:0;font-size:13.5px;line-height:1.6;color:var(--ink);flex:1;min-width:240px}
   .start-t b{color:var(--green-d)}
-  .start-s{font-size:12.5px;color:var(--green-d);font-weight:700}
   h1{
     font-size:22px;font-weight:800;letter-spacing:-.01em;margin:0 0 2px;color:var(--green-d);
     outline:none;
@@ -69,9 +68,15 @@
   .rownum .del:hover{background:var(--plum);color:#fff}
   tbody tr:nth-child(even) td{background:#f6f3ec}
   tbody tr:hover td{background:#fdfbf4}
-  /* column widths */
-  col.c-no{width:40px} col.c-time{width:70px} col.c-ch{width:150px} col.c-main{width:300px}
-  col.c-sp{width:120px} col.c-space{width:110px} col.c-char{width:110px}
+  /* 표 제목(머리줄) — 클릭해 이름 고치기, 마우스를 올리면 ✕로 열 삭제 */
+  thead th .hname{display:block;outline:none;min-width:2em;padding-right:16px;cursor:text}
+  thead th .hname:focus{background:rgba(255,255,255,.14);border-radius:4px;box-shadow:0 0 0 2px var(--sage)}
+  thead th .cdel{
+    position:absolute;right:2px;top:2px;width:18px;height:18px;display:none;border:none;
+    background:transparent;color:var(--parchment);font-size:12px;line-height:1;cursor:pointer;padding:0;border-radius:4px;
+  }
+  thead th:hover .cdel{display:block}
+  thead th .cdel:hover{background:var(--plum);color:#fff}
   /* 브런치북 — 추천 대상 · 소개 */
   .book{display:grid;grid-template-columns:minmax(260px,1fr) minmax(320px,1.6fr);gap:12px;margin:14px 0 4px}
   .card{border:1px solid var(--line);border-radius:10px;background:var(--chalk);padding:14px 16px}
@@ -126,10 +131,9 @@
     .wrap{border:none;border-radius:0;overflow:visible}
     /* 폭 100% 고정 레이아웃 — 열 너비를 비율로 재계산해 가로 한 장에 맞춘다 */
     table{min-width:0!important;width:100%!important;table-layout:fixed;font-size:calc(100vw*8/1077);line-height:1.3}
-    col{width:auto!important}
-    col.c-no{width:2.6%!important} col.c-time{width:5.2%!important}
-    col.c-ch{width:11%!important} col.c-main{width:20%!important}
-    col.c-sp{width:8.4%!important} col.c-space{width:8.4%!important} col.c-char{width:8.4%!important}
+    col{width:var(--pw)!important}
+    thead th .cdel{display:none!important}
+    thead th .hname{padding-right:0}
     th,td{border:.5px solid #c9c2b2!important}
     thead th{position:static!important;padding:calc(100vw*5/1077) calc(100vw*5/1077);font-size:calc(100vw*8/1077);height:calc(100vw*22.7/1077);
       background:#24463c!important;color:#f4f1ea!important}
@@ -147,7 +151,6 @@
   <button class="save-btn" onclick="saveFile()">💾 내 파일로 저장</button>
   <p class="start-t" id="startT"><b>쓰기 전에 먼저 저장하세요.</b> ① 이 단추를 누르면 나만의 파일이 내려받아집니다 →
     ② 다운로드 폴더에서 그 파일을 열어 거기서 쓰면 됩니다.</p>
-  <span class="start-s" id="startS"></span>
 </div>
 <header>
   <h1 id="title" contenteditable="true" spellcheck="false"></h1>
@@ -171,13 +174,16 @@
 
 <div class="bar">
   <button onclick="addRow()">＋ 행 추가</button>
+  <button onclick="addCol()">＋ 열 추가</button>
   <button class="ghost" onclick="clearAll()">전체 비우기</button>
   <button id="barSave" onclick="saveFile()" hidden>💾 파일로 저장</button>
   <button onclick="window.print()">🖨 인쇄 / PDF</button>
   <div class="guide">
     <b>쓰는 법</b>
     <span>칸 클릭 → 바로 입력 · 자동 저장</span>
+    <span>표 제목: 클릭해 고치기</span>
     <span>행 빼기: <b>No.</b>에 마우스 → <b>✕</b></span>
+    <span>열 빼기: 표 제목에 마우스 → <b>✕</b></span>
     <span>목차: 첫 행 <b>프롤로그</b>, 끝 행 <b>에필로그</b></span>
   </div>
   <span class="save" id="save">저장됨 · <b>자동</b></span>
@@ -185,32 +191,21 @@
 
 <div class="wrap">
   <table id="grid">
-    <colgroup>
-      <col class="c-no"><col class="c-time"><col class="c-ch"><col class="c-main">
-      <col class="c-sp"><col class="c-sp"><col class="c-sp"><col class="c-sp"><col class="c-sp">
-      <col class="c-space"><col class="c-char">
-    </colgroup>
-    <thead>
-      <tr>
-        <th class="rownum" style="position:sticky;top:0">No.</th>
-        <th>Time</th>
-        <th>Chapter <span style="opacity:.7;font-weight:400">(source)</span></th>
-        <th>Plot (Main)</th>
-        <th class="sp">Sub Plot 1</th>
-        <th class="sp">Sub Plot 2</th>
-        <th class="sp">Sub Plot 3</th>
-        <th class="sp">Sub Plot 4</th>
-        <th class="sp">Sub Plot 5</th>
-        <th>Space</th>
-        <th>Character</th>
-      </tr>
-    </thead>
+    <colgroup id="cg"></colgroup>
+    <thead><tr id="hr"></tr></thead>
     <tbody id="body"></tbody>
   </table>
 </div>
 
 <script>
-  const COLS = 10; // Time, Chapter, Main, Sub1-5, Space, Character
+  // 열 정의 — 이름·화면 폭(px)·서브플롯 색. 이름은 머리줄에서 고치고, 열은 더하고 뺄 수 있다
+  const DEFAULT_COLS = [
+    {name:"Time", w:70}, {name:"Chapter (source)", w:150}, {name:"Plot (Main)", w:300},
+    {name:"Sub Plot 1", w:120, sp:1}, {name:"Sub Plot 2", w:120, sp:1}, {name:"Sub Plot 3", w:120, sp:1},
+    {name:"Sub Plot 4", w:120, sp:1}, {name:"Sub Plot 5", w:120, sp:1},
+    {name:"Space", w:110}, {name:"Character", w:110}
+  ];
+  let cols = DEFAULT_COLS.map(c=>({...c}));
   // 💾 내 파일로 저장 — 저장된 사본에는 아래 EMBED 자리에 내용·번호가 구워진다
   const EMBED = /*EMBED*/null/*END*/;
   const SRC = "<!DOCTYPE html>\n" + document.documentElement.outerHTML;
@@ -233,15 +228,61 @@
     });
     th.appendChild(num); th.appendChild(x);
     tr.appendChild(th);
-    for(let c=0;c<COLS;c++){
-      const td = document.createElement("td");
-      const div = document.createElement("div");
-      div.className = "cell"; div.contentEditable = "true"; div.spellcheck = false;
-      div.innerHTML = (data && data[c]) ? data[c] : "";
-      div.addEventListener("input", save);
-      td.appendChild(div); tr.appendChild(td);
-    }
+    for(let c=0;c<cols.length;c++) tr.appendChild(makeCell(data && data[c]));
     return tr;
+  }
+
+  function makeCell(html){
+    const td = document.createElement("td");
+    const div = document.createElement("div");
+    div.className = "cell"; div.contentEditable = "true"; div.spellcheck = false;
+    div.innerHTML = html || "";
+    div.addEventListener("input", save);
+    td.appendChild(div);
+    return td;
+  }
+
+  // 머리줄·열 폭을 cols에서 다시 그린다 (인쇄 폭은 No. 2.6% + 나머지를 화면 폭 비율로)
+  function renderHead(){
+    const cg = document.getElementById("cg"), hr = document.getElementById("hr");
+    cg.innerHTML = ""; hr.innerHTML = "";
+    const total = cols.reduce((a,c)=>a+c.w, 0);
+    const c0 = document.createElement("col");
+    c0.style.width = "40px"; c0.style.setProperty("--pw", "2.6%"); cg.appendChild(c0);
+    const no = document.createElement("th");
+    no.className = "rownum"; no.textContent = "No."; hr.appendChild(no);
+    cols.forEach((c,i)=>{
+      const col = document.createElement("col");
+      col.style.width = c.w + "px"; col.style.setProperty("--pw", (97.4*c.w/total).toFixed(2) + "%");
+      cg.appendChild(col);
+      const th = document.createElement("th");
+      if(c.sp) th.className = "sp";
+      const nm = document.createElement("span");
+      nm.className = "hname"; nm.contentEditable = "true"; nm.spellcheck = false; nm.textContent = c.name;
+      nm.addEventListener("input", ()=>{ c.name = nm.textContent; save(); });
+      nm.addEventListener("keydown", e=>{ if(e.key==="Enter"){ e.preventDefault(); nm.blur(); }});
+      const x = document.createElement("button");
+      x.className = "cdel"; x.type = "button"; x.textContent = "✕"; x.title = "이 열 삭제";
+      x.addEventListener("click", ()=> delCol(i));
+      th.appendChild(nm); th.appendChild(x); hr.appendChild(th);
+    });
+    document.getElementById("grid").style.minWidth = Math.max(600, 40 + total) + "px";
+  }
+
+  function addCol(){
+    cols.push({name:"새 열", w:120});
+    body.querySelectorAll("tr").forEach(tr=> tr.appendChild(makeCell("")));
+    renderHead(); save();
+    const nm = [...document.querySelectorAll("#hr .hname")].pop();
+    nm.focus(); document.getSelection().selectAllChildren(nm);
+  }
+
+  function delCol(i){
+    if(cols.length<=1) return;
+    if(!confirm("「" + (cols[i].name.trim() || (i+1) + "번째") + "」 열을 정말 삭제하시겠습니까?")) return;
+    cols.splice(i, 1);
+    body.querySelectorAll("tr").forEach(tr=> tr.children[i+1].remove());
+    renderHead(); save();
   }
 
   function renumber(){
@@ -289,7 +330,7 @@
     const rows = [...body.querySelectorAll("tr")].map(tr =>
       [...tr.querySelectorAll(".cell")].map(c => c.innerHTML)
     );
-    return {title, rec, intro, rows};
+    return {title, rec, intro, cols, rows};
   }
 
   let t;
@@ -326,9 +367,12 @@
         if(d.title) document.getElementById("title").innerText = d.title;
         (d.rec||[]).forEach(v=> addRec(v));
         if(d.intro) introEl.value = d.intro;
+        if(Array.isArray(d.cols) && d.cols.length) cols = d.cols;
+        renderHead();
         (d.rows||[]).forEach((r,i)=> body.appendChild(makeRow(i+1, r)));
-      }catch(e){ seed(); }
+      }catch(e){ cols = DEFAULT_COLS.map(c=>({...c})); renderHead(); seed(); }
     } else { seed(); }
+    if(!document.getElementById("hr").children.length) renderHead();
     if(body.children.length===0) seed();
     document.getElementById("title").addEventListener("input", save);
     if(recEl.children.length===0) addRec("");
@@ -353,9 +397,6 @@
     a.download = name;
     document.body.appendChild(a); a.click(); a.remove();
     setTimeout(()=> URL.revokeObjectURL(a.href), 2000);
-    saveEl.innerHTML = "파일 저장 · <b>" + name + "</b>";
-    const ss = document.getElementById("startS");
-    if(ss) ss.textContent = "✓ " + name + " — 다운로드 폴더에서 여세요";
   }
 
   init();
