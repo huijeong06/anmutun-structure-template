@@ -162,8 +162,8 @@
     <button class="ghost add" type="button" onclick="addRec('', true)">＋ 추가하기</button>
   </div>
   <div class="card">
-    <div class="card-h"><h2>작성 계획</h2><span class="count" id="count"><b>0</b> / 500</span></div>
-    <textarea class="intro" id="intro" maxlength="500" spellcheck="false"
+    <div class="card-h"><h2>작성 계획</h2><span class="count" id="count"><b>0</b> / 1,000</span></div>
+    <textarea class="intro" id="intro" maxlength="1000" spellcheck="false"
       placeholder="글의 목적, 의도, 구성 기획, 작성 계획 등 길잡이가 될 내용을 적어주세요."></textarea>
     <p class="print-only" id="introPrint"></p>
   </div>
@@ -271,8 +271,8 @@
   function updateCount(){
     const n = [...introEl.value].length;
     const c = document.getElementById("count");
-    c.innerHTML = "<b>"+n+"</b> / 500";
-    c.classList.toggle("over", n>=500);
+    c.innerHTML = "<b>"+n+"</b> / 1,000";
+    c.classList.toggle("over", n>=1000);
   }
 
   function syncPrint(){
