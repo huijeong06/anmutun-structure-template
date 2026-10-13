@@ -86,15 +86,13 @@
     color:var(--ink);background:#fff;border:1px solid var(--line);border-radius:7px;padding:10px 12px;outline:none;
   }
   .print-only{display:none}
-  .copy-tag{display:inline-block;margin:6px 0 0;font-size:12px;font-weight:700;color:var(--plum);
-    border:1px solid var(--plum);border-radius:999px;padding:2px 10px}
   @media (max-width:720px){.book{grid-template-columns:1fr}}
   .hint{font-size:12px;color:var(--sub);margin:12px 2px 0;line-height:1.6}
   .hint b{color:var(--green-d)}
   @media print{
     @page{size:297mm 210mm landscape;margin:7mm}
     html,body{margin:0;padding:0;background:#fff;-webkit-print-color-adjust:exact;print-color-adjust:exact}
-    .bar,.hint,.rownum .del,.copy-tag{display:none!important}
+    .bar,.hint,.rownum .del{display:none!important}
     .book{grid-template-columns:1fr 1.8fr;gap:5px;margin:0 0 5px}
     .card{padding:4px 7px;border-radius:0;border:.5px solid #c9c2b2}
     .card-h{margin:0 0 2px} .card-h h2{font-size:8px} .count{font-size:7px}
@@ -291,7 +289,6 @@
     let raw = null;
     try{ raw = localStorage.getItem(KEY); }catch(e){}
     if(!raw && EMBED) raw = JSON.stringify(EMBED.data);
-    if(EMBED) markCopy();
     if(raw){
       try{
         const d = JSON.parse(raw);
@@ -312,15 +309,6 @@
   function seed(){
     body.innerHTML = "";
     for(let i=0;i<15;i++) body.appendChild(makeRow(i+1));
-  }
-
-  function markCopy(){
-    const d = new Date(EMBED.at);
-    const tag = document.createElement("span");
-    tag.className = "copy-tag";
-    tag.textContent = "내 사본 No." + String(EMBED.n).padStart(2,"0") + " · " +
-      d.toLocaleDateString("ko-KR") + " 저장";
-    document.querySelector(".sub").after(tag);
   }
 
   function saveFile(){
