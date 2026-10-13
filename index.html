@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>아무튼, ___ — 전체 구조 템플릿</title>
+<style>
+  :root{
+    --parchment:#f4f1ea; --chalk:#f9f7f2; --ink:#17171a; --sub:#5a574f;
+    --line:#d8d2c4; --line2:#eae5da; --green:#24463c; --green-d:#1b362e;
+    --green-l:#3a6959; --plum:#8e2c3f; --sage:#9fbaaf;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{
+    font-family:"Pretendard","Apple SD Gothic Neo","Noto Sans KR",-apple-system,system-ui,sans-serif;
+    background:var(--parchment); color:var(--ink); -webkit-font-smoothing:antialiased;
+    padding:28px 22px 60px;
+  }
+  header{max-width:none;margin:0 0 14px}
+  h1{
+    font-size:22px;font-weight:800;letter-spacing:-.01em;margin:0 0 2px;color:var(--green-d);
+    outline:none;
+  }
+  h1::before{content:"‹ ";color:var(--plum)} h1::after{content:" ›";color:var(--plum)}
+  .sub{font-size:13px;color:var(--sub);margin:0}
+  .bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:14px 0}
+  button{
+    font:inherit;font-size:13px;font-weight:600;padding:7px 13px;border-radius:8px;cursor:pointer;
+    border:1px solid var(--green);background:var(--chalk);color:var(--green-d);transition:.12s;
+  }
+  button:hover{background:var(--green);color:var(--chalk)}
+  button.ghost{border-color:var(--line);color:var(--sub)}
+  button.ghost:hover{background:var(--line2);color:var(--ink)}
+  .save{font-size:12px;color:var(--sub);margin-left:auto}
+  .save b{color:var(--green-l)}
+  .wrap{overflow-x:auto;border:1px solid var(--line);border-radius:10px;background:var(--chalk)}
+  table{border-collapse:collapse;width:100%;min-width:1400px;font-size:12.5px;line-height:1.45}
+  th,td{border:1px solid var(--line);padding:0;vertical-align:top}
+  thead th{
+    background:var(--green);color:var(--parchment);font-weight:700;font-size:12px;
+    padding:9px 8px;text-align:left;white-space:nowrap;position:sticky;top:0;z-index:2;
+  }
+  thead th.sp{background:var(--green-d)}
+  td div.cell, th.rownum{padding:8px 8px}
+  td div.cell{min-height:54px;outline:none}
+  td div.cell:focus{background:#fffdf7;box-shadow:inset 0 0 0 2px var(--sage)}
+  .rownum{
+    background:var(--line2);color:var(--plum);font-weight:800;text-align:center;
+    width:40px;font-size:13px;user-select:none;position:relative;
+  }
+  .rownum .del{
+    position:absolute;top:2px;right:2px;display:none;border:none;background:transparent;
+    color:var(--plum);font-size:11px;line-height:1;cursor:pointer;padding:2px;border-radius:4px;
+  }
+  tbody tr:hover .rownum .del{display:block}
+  .rownum .del:hover{background:var(--plum);color:#fff}
+  tbody tr:nth-child(even) td{background:#f6f3ec}
+  tbody tr:hover td{background:#fdfbf4}
+  /* column widths */
+  col.c-no{width:40px} col.c-time{width:70px} col.c-ch{width:150px} col.c-main{width:300px}
+  col.c-sp{width:120px} col.c-space{width:110px} col.c-char{width:110px}
+  .hint{font-size:12px;color:var(--sub);margin:12px 2px 0;line-height:1.6}
+  .hint b{color:var(--green-d)}
+  @media print{
+    @page{size:A4 landscape;margin:7mm}
+    html,body{margin:0;padding:0;background:#fff;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+    .bar,.hint,.rownum .del{display:none!important}
+    header{margin:0 0 5px}
+    h1{font-size:14px;margin:0}
+    .sub{font-size:9px}
+    .wrap{border:none;border-radius:0;overflow:visible}
+    /* 폭 100% 고정 레이아웃 — 열 너비를 비율로 재계산해 가로 한 장에 맞춘다 */
+    table{min-width:0!important;width:100%!important;table-layout:fixed;font-size:7.6px;line-height:1.25}
+    col{width:auto!important}
+    col.c-no{width:2.6%!important} col.c-time{width:5.2%!important}
+    col.c-ch{width:11%!important} col.c-main{width:20%!important}
+    col.c-sp{width:8.4%!important} col.c-space{width:8.4%!important} col.c-char{width:8.4%!important}
+    th,td{border:.5px solid #c9c2b2!important}
+    thead th{position:static!important;padding:4px 4px;font-size:7.4px;
+      background:#24463c!important;color:#f4f1ea!important}
+    thead th.sp{background:#1b362e!important}
+    td div.cell{min-height:0!important;padding:3px 4px;word-break:break-word;white-space:normal}
+    .rownum{padding:3px 2px;font-size:8px;background:#eae5da!important;color:#8e2c3f!important}
+    tbody tr{page-break-inside:avoid}
+    tbody tr:nth-child(even) td{background:#f1efe8!important}
+    tbody tr:hover td{background:#f1efe8!important}
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1 id="title" contenteditable="true" spellcheck="false">아무튼, ___</h1>
+  <p class="sub"><b style="color:var(--green-d)">제목(‹아무튼, ___›)을 클릭해 소재를 채우세요.</b> 시기별 챕터에 메인 플롯·서브플롯·공간·인물을 걸어 한 권의 지도를 짭니다.</p>
+</header>
+
+<div class="bar">
+  <button onclick="addRow()">＋ 행 추가</button>
+  <button class="ghost" onclick="delRow()">－ 마지막 행 빼기</button>
+  <button class="ghost" onclick="clearAll()">전체 비우기</button>
+  <button onclick="window.print()">🖨 인쇄 / PDF</button>
+  <span class="save" id="save">저장됨 · <b>자동</b></span>
+</div>
+
+<div class="wrap">
+  <table id="grid">
+    <colgroup>
+      <col class="c-no"><col class="c-time"><col class="c-ch"><col class="c-main">
+      <col class="c-sp"><col class="c-sp"><col class="c-sp"><col class="c-sp"><col class="c-sp">
+      <col class="c-space"><col class="c-char">
+    </colgroup>
+    <thead>
+      <tr>
+        <th class="rownum" style="position:sticky;top:0">No.</th>
+        <th>Time</th>
+        <th>Chapter <span style="opacity:.7;font-weight:400">(source)</span></th>
+        <th>Plot (Main)</th>
+        <th class="sp">Sub Plot 1</th>
+        <th class="sp">Sub Plot 2</th>
+        <th class="sp">Sub Plot 3</th>
+        <th class="sp">Sub Plot 4</th>
+        <th class="sp">Sub Plot 5</th>
+        <th>Space</th>
+        <th>Character</th>
+      </tr>
+    </thead>
+    <tbody id="body"></tbody>
+  </table>
+</div>
+
+<p class="hint">
+  <b>쓰는 법</b> · 칸을 눌러 바로 입력 — 모든 변경은 이 브라우저에 <b>자동 저장</b>된다(새로고침해도 유지).
+  행이 모자라면 <b>＋ 행 추가</b>, 특정 행을 빼려면 <b>행 번호에 마우스를 올려 ✕</b>(중간 행도 삭제), 맨 끝 행은 <b>－ 마지막 행 빼기</b>.
+  인쇄는 가로 A4로 맞춰져 있어 <b>🖨 인쇄 / PDF</b>로 종이에 그대로 뽑을 수 있다. 목차는 보통 <b>15개 안팎</b> —
+  첫 행은 <b>프롤로그</b>, 마지막 행은 <b>에필로그</b>로 둔다.
+</p>
+
+<script>
+  const COLS = 10; // Time, Chapter, Main, Sub1-5, Space, Character
+  const KEY = "anmutun-structure-template-v1";
+  const body = document.getElementById("body");
+  const saveEl = document.getElementById("save");
+
+  function makeRow(n, data){
+    const tr = document.createElement("tr");
+    const th = document.createElement("th");
+    th.className = "rownum";
+    const num = document.createElement("span"); num.className = "n"; num.textContent = n;
+    const x = document.createElement("button");
+    x.className = "del"; x.type = "button"; x.textContent = "✕"; x.title = "이 행 삭제";
+    x.addEventListener("click", ()=>{ if(body.children.length>1){ tr.remove(); renumber(); save(); }});
+    th.appendChild(num); th.appendChild(x);
+    tr.appendChild(th);
+    for(let c=0;c<COLS;c++){
+      const td = document.createElement("td");
+      const div = document.createElement("div");
+      div.className = "cell"; div.contentEditable = "true"; div.spellcheck = false;
+      div.innerHTML = (data && data[c]) ? data[c] : "";
+      div.addEventListener("input", save);
+      td.appendChild(div); tr.appendChild(td);
+    }
+    return tr;
+  }
+
+  function renumber(){
+    [...body.querySelectorAll("tr")].forEach((tr,i)=> tr.querySelector(".rownum .n").textContent = i+1);
+  }
+
+  function collect(){
+    const title = document.getElementById("title").innerText;
+    const rows = [...body.querySelectorAll("tr")].map(tr =>
+      [...tr.querySelectorAll(".cell")].map(c => c.innerHTML)
+    );
+    return {title, rows};
+  }
+
+  let t;
+  function save(){
+    clearTimeout(t);
+    t = setTimeout(()=>{
+      localStorage.setItem(KEY, JSON.stringify(collect()));
+      const now = new Date();
+      saveEl.innerHTML = "저장됨 · <b>"+now.toLocaleTimeString("ko-KR",{hour:"2-digit",minute:"2-digit"})+"</b>";
+    }, 250);
+  }
+
+  function addRow(data){ body.appendChild(makeRow(body.children.length+1, data)); renumber(); save(); }
+  function delRow(){ if(body.children.length>1){ body.lastElementChild.remove(); save(); } }
+  function clearAll(){
+    if(!confirm("모든 칸을 비웁니다. (행 수는 유지)")) return;
+    body.querySelectorAll(".cell").forEach(c=>c.innerHTML="");
+    save();
+  }
+
+  function init(){
+    const raw = localStorage.getItem(KEY);
+    if(raw){
+      try{
+        const d = JSON.parse(raw);
+        if(d.title) document.getElementById("title").innerText = d.title;
+        (d.rows||[]).forEach((r,i)=> body.appendChild(makeRow(i+1, r)));
+      }catch(e){ seed(); }
+    } else { seed(); }
+    if(body.children.length===0) seed();
+    document.getElementById("title").addEventListener("input", save);
+  }
+
+  function seed(){
+    body.innerHTML = "";
+    for(let i=0;i<15;i++) body.appendChild(makeRow(i+1));
+  }
+
+  init();
+</script>
+</body>
+</html>
