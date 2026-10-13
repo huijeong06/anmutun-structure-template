@@ -39,9 +39,9 @@
   button.ghost{border-color:var(--line);color:var(--sub)}
   button.ghost:hover{background:var(--line2);color:var(--ink)}
   .save{font-size:12px;color:var(--sub);margin-left:auto}
-  .guide{display:flex;flex-wrap:wrap;align-items:center;gap:4px 0;margin-left:6px;font-size:12.5px;color:var(--ink)}
-  .guide>b{color:var(--green-d);margin-right:10px}
-  .guide span{padding:0 10px;border-left:1px solid var(--line)}
+  .guide{display:flex;flex-wrap:wrap;align-items:center;gap:3px 0;margin-left:4px;font-size:11.5px;line-height:1.4;color:var(--ink)}
+  .guide>b{color:var(--green-d);margin-right:7px}
+  .guide span{padding:0 7px;border-left:1px solid var(--line);white-space:nowrap}
   .guide span b{color:var(--green-d)}
   .save b{color:var(--green-l)}
   .wrap{overflow-x:auto;border:1px solid var(--line);border-radius:10px;background:var(--chalk)}
@@ -187,12 +187,12 @@
   <button class="ghost" onclick="clearAll()">🗑 전체 비우기</button>
   <div class="guide">
     <b>쓰는 법</b>
-    <span>칸 클릭 → 바로 입력 · 자동 저장</span>
-    <span>표 제목: 클릭해 고치기</span>
-    <span>행 빼기: <b>No.</b>에 마우스 → <b>✕</b></span>
-    <span>열 빼기: 표 제목에 마우스 → <b>✕</b></span>
-    <span>열 너비: 표 제목 오른쪽 경계를 끌기</span>
-    <span>목차: 첫 행 <b>프롤로그</b>, 끝 행 <b>에필로그</b></span>
+    <span>입력: 칸 클릭 · 자동 저장</span>
+    <span>표 제목: 클릭해 수정</span>
+    <span>행 삭제: <b>No.</b> 위 <b>✕</b></span>
+    <span>열 삭제: 표 제목 위 <b>✕</b></span>
+    <span>열 너비: 제목 경계 끌기</span>
+    <span>목차: 첫 행 <b>프롤로그</b> · 끝 행 <b>에필로그</b></span>
   </div>
   <span class="save" id="save">저장됨 · <b>자동</b></span>
 </div>
