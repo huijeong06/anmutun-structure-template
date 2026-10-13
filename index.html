@@ -40,6 +40,10 @@
   button.ghost{border-color:var(--line);color:var(--sub)}
   button.ghost:hover{background:var(--line2);color:var(--ink)}
   .save{font-size:12px;color:var(--sub);margin-left:auto}
+  .guide{display:flex;flex-wrap:wrap;align-items:center;gap:4px 0;margin-left:6px;font-size:12.5px;color:var(--ink)}
+  .guide>b{color:var(--green-d);margin-right:10px}
+  .guide span{padding:0 10px;border-left:1px solid var(--line)}
+  .guide span b{color:var(--green-d)}
   .save b{color:var(--green-l)}
   .wrap{overflow-x:auto;border:1px solid var(--line);border-radius:10px;background:var(--chalk)}
   table{border-collapse:collapse;width:100%;min-width:1400px;font-size:12.5px;line-height:1.45}
@@ -57,10 +61,11 @@
     width:40px;font-size:13px;user-select:none;position:relative;
   }
   .rownum .del{
-    position:absolute;top:2px;right:2px;display:none;border:none;background:transparent;
-    color:var(--plum);font-size:11px;line-height:1;cursor:pointer;padding:2px;border-radius:4px;
+    position:absolute;inset:0;margin:auto;width:28px;height:28px;display:none;border:none;
+    background:transparent;color:var(--plum);font-size:18px;line-height:1;cursor:pointer;padding:0;border-radius:6px;
   }
   tbody tr:hover .rownum .del{display:block}
+  tbody tr:hover .rownum .n{visibility:hidden}
   .rownum .del:hover{background:var(--plum);color:#fff}
   tbody tr:nth-child(even) td{background:#f6f3ec}
   tbody tr:hover td{background:#fdfbf4}
@@ -98,8 +103,6 @@
   }
   .print-only{display:none}
   @media (max-width:720px){.book{grid-template-columns:1fr} .card.recs{height:auto;min-height:0}}
-  .hint{font-size:12px;color:var(--sub);margin:12px 2px 0;line-height:1.6}
-  .hint b{color:var(--green-d)}
   /* 용지 크기는 인쇄 창에서 고른 대로(A4·A3·B4…), 방향만 가로 — 어느 용지든 한 장을 꽉 채운다 */
   @page{size:landscape;margin:6mm}
   @media print{
@@ -109,7 +112,7 @@
     body{width:100vw;height:100vh;display:flex;flex-direction:column;overflow:hidden}
     .wrap{flex:1;min-height:0;width:100%}
     table{height:100%}
-    .bar,.hint,.rownum .del,.start,.sub{display:none!important}
+    .bar,.rownum .del,.start,.sub{display:none!important}
     .card.recs{height:auto;min-height:0}
     .book{grid-template-columns:1fr 1.8fr;gap:calc(100vw*5/1077);margin:0 0 calc(100vw*5/1077)}
     .card{padding:calc(100vw*4/1077) calc(100vw*7/1077);border-radius:0;border:.5px solid #c9c2b2}
@@ -168,10 +171,16 @@
 
 <div class="bar">
   <button onclick="addRow()">＋ 행 추가</button>
-  <button class="ghost" onclick="delRow()">－ 마지막 행 빼기</button>
   <button class="ghost" onclick="clearAll()">전체 비우기</button>
   <button id="barSave" onclick="saveFile()" hidden>💾 파일로 저장</button>
   <button onclick="window.print()">🖨 인쇄 / PDF</button>
+  <div class="guide">
+    <b>쓰는 법</b>
+    <span>칸 클릭 → 바로 입력 · 자동 저장</span>
+    <span>행 빼기: <b>No.</b>에 마우스 → <b>✕</b></span>
+    <span>목차 15개 안팎 · 첫 행 <b>프롤로그</b>, 끝 행 <b>에필로그</b></span>
+    <span>인쇄: 고른 용지 한 장에 가로로</span>
+  </div>
   <span class="save" id="save">저장됨 · <b>자동</b></span>
 </div>
 
@@ -200,14 +209,6 @@
     <tbody id="body"></tbody>
   </table>
 </div>
-
-<p class="hint">
-  <b>쓰는 법</b> · 칸을 눌러 바로 입력 — 모든 변경은 이 브라우저에 <b>자동 저장</b>된다(새로고침해도 유지).
-  행이 모자라면 <b>＋ 행 추가</b>, 특정 행을 빼려면 <b>행 번호에 마우스를 올려 ✕</b>(중간 행도 삭제), 맨 끝 행은 <b>－ 마지막 행 빼기</b>.
-  인쇄는 가로 방향으로, 고른 용지(A4·A3 등) 한 장에 맞춰져 있어 <b>🖨 인쇄 / PDF</b>로 종이에 그대로 뽑을 수 있다. 목차는 보통 <b>15개 안팎</b> —
-  첫 행은 <b>프롤로그</b>, 마지막 행은 <b>에필로그</b>로 둔다.<br>
-  다른 기기로 옮기거나 백업하려면 <b>💾 저장</b> 단추를 한 번 더 눌러 그때까지 쓴 내용을 새 파일로 남긴다.
-</p>
 
 <script>
   const COLS = 10; // Time, Chapter, Main, Sub1-5, Space, Character
@@ -299,7 +300,6 @@
   }
 
   function addRow(data){ body.appendChild(makeRow(body.children.length+1, data)); renumber(); save(); }
-  function delRow(){ if(body.children.length>1){ body.lastElementChild.remove(); save(); } }
   function clearAll(){
     if(!confirm("모든 칸을 비웁니다. (행 수는 유지)")) return;
     recEl.querySelectorAll("input").forEach(i=>i.value="");
