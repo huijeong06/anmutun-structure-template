@@ -100,37 +100,39 @@
   @media (max-width:720px){.book{grid-template-columns:1fr} .card.recs{height:auto;min-height:0}}
   .hint{font-size:12px;color:var(--sub);margin:12px 2px 0;line-height:1.6}
   .hint b{color:var(--green-d)}
-  @page{size:A4 landscape;margin:6mm}
+  /* 용지 크기는 인쇄 창에서 고른 대로(A4·A3·B4…), 방향만 가로 — 어느 용지든 한 장을 꽉 채운다 */
+  @page{size:landscape;margin:6mm}
   @media print{
     html,body{margin:0;padding:0;background:#fff;-webkit-print-color-adjust:exact;print-color-adjust:exact}
-    /* A4 가로(297×210) − 여백 6mm = 285×198mm 한 장을 가로·세로 모두 채운다 */
-    body{width:285mm;height:198mm;display:flex;flex-direction:column;overflow:hidden}
-    .wrap{flex:1;min-height:0;width:285mm}
+    /* 인쇄 영역(100vw×100vh = 고른 용지 − 여백)을 가로·세로 모두 채우고,
+       글자·여백은 A4 가로 폭(1077px)을 기준으로 용지 폭에 비례해 커지고 작아진다 */
+    body{width:100vw;height:100vh;display:flex;flex-direction:column;overflow:hidden}
+    .wrap{flex:1;min-height:0;width:100%}
     table{height:100%}
     .bar,.hint,.rownum .del,.start,.sub{display:none!important}
     .card.recs{height:auto;min-height:0}
-    .book{grid-template-columns:1fr 1.8fr;gap:5px;margin:0 0 5px}
-    .card{padding:4px 7px;border-radius:0;border:.5px solid #c9c2b2}
-    .card-h{margin:0 0 2px} .card-h h2{font-size:8px} .count{font-size:7px}
+    .book{grid-template-columns:1fr 1.8fr;gap:calc(100vw*5/1077);margin:0 0 calc(100vw*5/1077)}
+    .card{padding:calc(100vw*4/1077) calc(100vw*7/1077);border-radius:0;border:.5px solid #c9c2b2}
+    .card-h{margin:0 0 calc(100vw*2/1077)} .card-h h2{font-size:calc(100vw*8/1077)} .count{font-size:calc(100vw*7/1077)}
     .rec,.add,.intro{display:none!important}
-    .print-only{display:block;font-size:7.6px;line-height:1.35;white-space:pre-wrap;margin:0}
-    ul.print-only{padding-left:10px}
-    header{margin:0 0 5px}
-    h1{font-size:14px;margin:0}
-    .sub{font-size:9px}
+    .print-only{display:block;font-size:calc(100vw*7.6/1077);line-height:1.35;white-space:pre-wrap;margin:0}
+    ul.print-only{padding-left:calc(100vw*10/1077)}
+    header{margin:0 0 calc(100vw*5/1077)}
+    h1{font-size:calc(100vw*14/1077);margin:0}
+    .sub{font-size:calc(100vw*9/1077)}
     .wrap{border:none;border-radius:0;overflow:visible}
     /* 폭 100% 고정 레이아웃 — 열 너비를 비율로 재계산해 가로 한 장에 맞춘다 */
-    table{min-width:0!important;width:100%!important;table-layout:fixed;font-size:8px;line-height:1.3}
+    table{min-width:0!important;width:100%!important;table-layout:fixed;font-size:calc(100vw*8/1077);line-height:1.3}
     col{width:auto!important}
     col.c-no{width:2.6%!important} col.c-time{width:5.2%!important}
     col.c-ch{width:11%!important} col.c-main{width:20%!important}
     col.c-sp{width:8.4%!important} col.c-space{width:8.4%!important} col.c-char{width:8.4%!important}
     th,td{border:.5px solid #c9c2b2!important}
-    thead th{position:static!important;padding:5px 5px;font-size:8px;height:6mm;
+    thead th{position:static!important;padding:calc(100vw*5/1077) calc(100vw*5/1077);font-size:calc(100vw*8/1077);height:calc(100vw*22.7/1077);
       background:#24463c!important;color:#f4f1ea!important}
     thead th.sp{background:#1b362e!important}
-    td div.cell{min-height:0!important;padding:3px 4px;word-break:break-word;white-space:normal}
-    .rownum{padding:3px 2px;font-size:8px;background:#eae5da!important;color:#8e2c3f!important}
+    td div.cell{min-height:0!important;padding:calc(100vw*3/1077) calc(100vw*4/1077);word-break:break-word;white-space:normal}
+    .rownum{padding:calc(100vw*3/1077) calc(100vw*2/1077);font-size:calc(100vw*8/1077);background:#eae5da!important;color:#8e2c3f!important}
     tbody tr{page-break-inside:avoid}
     tbody tr:nth-child(even) td{background:#f1efe8!important}
     tbody tr:hover td{background:#f1efe8!important}
@@ -202,7 +204,7 @@
 <p class="hint">
   <b>쓰는 법</b> · 칸을 눌러 바로 입력 — 모든 변경은 이 브라우저에 <b>자동 저장</b>된다(새로고침해도 유지).
   행이 모자라면 <b>＋ 행 추가</b>, 특정 행을 빼려면 <b>행 번호에 마우스를 올려 ✕</b>(중간 행도 삭제), 맨 끝 행은 <b>－ 마지막 행 빼기</b>.
-  인쇄는 가로 A4로 맞춰져 있어 <b>🖨 인쇄 / PDF</b>로 종이에 그대로 뽑을 수 있다. 목차는 보통 <b>15개 안팎</b> —
+  인쇄는 가로 방향으로, 고른 용지(A4·A3 등) 한 장에 맞춰져 있어 <b>🖨 인쇄 / PDF</b>로 종이에 그대로 뽑을 수 있다. 목차는 보통 <b>15개 안팎</b> —
   첫 행은 <b>프롤로그</b>, 마지막 행은 <b>에필로그</b>로 둔다.<br>
   다른 기기로 옮기거나 백업하려면 <b>💾 저장</b> 단추를 한 번 더 눌러 그때까지 쓴 내용을 새 파일로 남긴다.
 </p>
