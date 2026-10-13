@@ -61,9 +61,10 @@
     width:40px;font-size:13px;user-select:none;position:relative;
   }
   .rownum .del{
-    position:absolute;right:2px;bottom:3px;width:18px;height:18px;display:none;border:none;
+    position:absolute;right:2px;top:2px;width:18px;height:18px;display:none;border:none;
     background:transparent;color:var(--plum);font-size:12px;line-height:1;cursor:pointer;padding:0;border-radius:4px;
   }
+  tbody .rownum{vertical-align:middle;text-align:center}
   tbody tr:hover .rownum .del{display:block}
   .rownum .del:hover{background:var(--plum);color:#fff}
   tbody tr:nth-child(even) td{background:#f6f3ec}
@@ -225,7 +226,11 @@
     const num = document.createElement("span"); num.className = "n"; num.textContent = n;
     const x = document.createElement("button");
     x.className = "del"; x.type = "button"; x.textContent = "✕"; x.title = "이 행 삭제";
-    x.addEventListener("click", ()=>{ if(body.children.length>1){ tr.remove(); renumber(); save(); }});
+    x.addEventListener("click", ()=>{
+      if(body.children.length<=1) return;
+      if(!confirm(th.querySelector(".n").textContent + "번 행을 정말 삭제하시겠습니까?")) return;
+      tr.remove(); renumber(); save();
+    });
     th.appendChild(num); th.appendChild(x);
     tr.appendChild(th);
     for(let c=0;c<COLS;c++){
