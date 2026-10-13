@@ -70,19 +70,19 @@
   tbody tr:nth-child(even) td{background:#f6f3ec}
   tbody tr:hover td{background:#fdfbf4}
   /* 표 제목(머리줄) — 클릭해 이름 고치기, 마우스를 올리면 ✕로 열 삭제 */
-  thead th .hname{display:block;outline:none;min-width:2em;padding-right:16px;cursor:text}
+  thead th .hname{display:block;outline:none;min-width:2em;padding-right:24px;cursor:text}
   thead th .hname:focus{background:rgba(255,255,255,.14);border-radius:4px;box-shadow:0 0 0 2px var(--sage)}
   thead th .cdel{
-    position:absolute;right:8px;top:2px;width:18px;height:18px;display:none;border:none;
-    background:transparent;color:var(--parchment);font-size:12px;line-height:1;cursor:pointer;padding:0;border-radius:4px;
+    position:absolute;right:7px;top:50%;transform:translateY(-50%);width:20px;height:20px;display:none;border:none;
+    background:rgba(255,255,255,.12);color:var(--parchment);font-size:11px;line-height:20px;text-align:center;
+    cursor:pointer;padding:0;border-radius:50%;
   }
   thead th:hover .cdel{display:block}
   thead th{overflow:visible}
-  /* 열 너비 — 표 제목 오른쪽 경계를 끌어 조절, 두 번 누르면 기본 폭 */
-  thead th .rz{position:absolute;top:0;right:-4px;width:8px;height:100%;cursor:col-resize;z-index:3}
-  thead th .rz::after{content:"";position:absolute;left:3px;top:20%;height:60%;width:2px;border-radius:1px;background:transparent}
-  thead th .rz:hover::after,body.resizing thead th .rz.on::after{background:var(--sage)}
-  body.resizing{cursor:col-resize;user-select:none}
+  /* 열 너비 — 표 안 어느 세로 경계든 끌어 조절, 두 번 누르면 기본 폭 */
+  #grid.near, #grid.near *{cursor:col-resize!important}
+  body.resizing, body.resizing *{cursor:col-resize!important;user-select:none}
+  #rzLine{position:fixed;width:2px;margin-left:-1px;background:var(--sage);pointer-events:none;display:none;z-index:5}
   thead th .cdel:hover{background:var(--plum);color:#fff}
   /* 브런치북 — 추천 대상 · 소개 */
   .book{display:grid;grid-template-columns:minmax(260px,1fr) minmax(320px,1.6fr);gap:12px;margin:14px 0 4px}
@@ -139,7 +139,7 @@
     /* 폭 100% 고정 레이아웃 — 열 너비를 비율로 재계산해 가로 한 장에 맞춘다 */
     table{min-width:0!important;width:100%!important;table-layout:fixed;font-size:calc(100vw*8/1077);line-height:1.3}
     col{width:var(--pw)!important}
-    thead th .cdel,thead th .rz{display:none!important}
+    thead th .cdel,#rzLine{display:none!important}
     thead th .hname{padding-right:0}
     th,td{border:.5px solid #c9c2b2!important}
     thead th{position:static!important;padding:calc(100vw*5/1077) calc(100vw*5/1077);font-size:calc(100vw*8/1077);height:calc(100vw*22.7/1077);
@@ -191,7 +191,7 @@
     <span>표 제목: 클릭해 수정</span>
     <span>행 삭제: <b>No.</b> 위 <b>✕</b></span>
     <span>열 삭제: 표 제목 위 <b>✕</b></span>
-    <span>열 너비: 제목 경계 끌기</span>
+    <span>열 너비: 세로 경계선 끌기</span>
     <span>목차: 첫 행 <b>프롤로그</b> · 끝 행 <b>에필로그</b></span>
   </div>
   <span class="save" id="save">저장됨 · <b>자동</b></span>
@@ -279,31 +279,71 @@
       const x = document.createElement("button");
       x.className = "cdel"; x.type = "button"; x.textContent = "✕"; x.title = "이 열 삭제";
       x.addEventListener("click", ()=> delCol(i));
-      const rz = document.createElement("span");
-      rz.className = "rz"; rz.title = "끌어서 너비 조절 · 두 번 누르면 기본 폭";
-      rz.addEventListener("pointerdown", e=> startResize(e, i, col, rz));
-      rz.addEventListener("dblclick", ()=>{
-        const d = DEFAULT_COLS.find(x=>x.name===c.name);
-        c.w = d ? d.w : 120; renderHead(); save();
-      });
-      th.appendChild(nm); th.appendChild(x); th.appendChild(rz); hr.appendChild(th);
+      th.appendChild(nm); th.appendChild(x); hr.appendChild(th);
     });
     document.getElementById("grid").style.minWidth = Math.max(600, 40 + total) + "px";
   }
 
-  function startResize(e, i, col, rz){
+  // 마우스가 세로 경계에서 5px 안이면 그 경계 왼쪽 열의 번호를, 아니면 -1을 돌려준다
+  const grid = document.getElementById("grid");
+  const rzLine = document.createElement("div"); rzLine.id = "rzLine"; document.body.appendChild(rzLine);
+  function edgeAt(e){
+    const cell = e.target.closest && e.target.closest("td,th");
+    if(!cell || !grid.contains(cell)) return -1;
+    const r = cell.getBoundingClientRect();
+    let k = -1;
+    if(e.clientX >= r.right - 5) k = cell.cellIndex - 1;
+    else if(e.clientX <= r.left + 5) k = cell.cellIndex - 2;
+    return (k >= 0 && k < cols.length) ? k : -1;
+  }
+  function showLine(k){
+    const th = document.getElementById("hr").children[k+1];
+    if(!th){ rzLine.style.display = "none"; return; }
+    const g = grid.getBoundingClientRect(), r = th.getBoundingClientRect();
+    const wrap = grid.parentElement.getBoundingClientRect();
+    rzLine.style.left = r.right + "px";
+    rzLine.style.top = Math.max(g.top, wrap.top, 0) + "px";
+    rzLine.style.height = (Math.min(g.bottom, wrap.bottom, innerHeight) - Math.max(g.top, wrap.top, 0)) + "px";
+    rzLine.style.display = "block";
+  }
+  grid.addEventListener("pointermove", e=>{
+    if(document.body.classList.contains("resizing")) return;
+    const k = edgeAt(e);
+    grid.classList.toggle("near", k >= 0);
+    if(k >= 0) showLine(k); else rzLine.style.display = "none";
+  });
+  grid.addEventListener("pointerleave", ()=>{
+    if(document.body.classList.contains("resizing")) return;
+    grid.classList.remove("near"); rzLine.style.display = "none";
+  });
+  grid.addEventListener("pointerdown", e=>{
+    const k = edgeAt(e);
+    if(k >= 0) startResize(e, k);
+  });
+  grid.addEventListener("dblclick", e=>{
+    const k = edgeAt(e);
+    if(k < 0) return;
+    e.preventDefault(); document.getSelection().removeAllRanges();
+    const d = DEFAULT_COLS.find(x=>x.name===cols[k].name);
+    cols[k].w = d ? d.w : 120; renderHead(); save(); showLine(k);
+  });
+
+  function startResize(e, i){
     e.preventDefault();
     const c = cols[i], x0 = e.clientX, w0 = c.w;
+    const col = document.querySelectorAll("#cg col")[i+1];
     const others = cols.reduce((a,o,k)=> k===i ? a : a+o.w, 0);
-    rz.classList.add("on"); document.body.classList.add("resizing");
+    document.body.classList.add("resizing"); showLine(i);
     const move = ev=>{
       c.w = Math.max(50, Math.round(w0 + ev.clientX - x0));
       col.style.width = c.w + "px";
-      document.getElementById("grid").style.minWidth = Math.max(600, 40 + others + c.w) + "px";
+      grid.style.minWidth = Math.max(600, 40 + others + c.w) + "px";
+      showLine(i);
     };
     const up = ()=>{
       window.removeEventListener("pointermove", move); window.removeEventListener("pointerup", up);
-      document.body.classList.remove("resizing");
+      document.body.classList.remove("resizing"); grid.classList.remove("near");
+      rzLine.style.display = "none";
       renderHead(); save();
     };
     window.addEventListener("pointermove", move); window.addEventListener("pointerup", up);
