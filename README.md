@@ -7,7 +7,7 @@
 
 ## 바로 쓰기
 
-👉 **https://huijeong06.github.io/anmutun-structure-template/**
+👉 **https://huijeong06.github.io/writing-structure-template/**
 
 링크를 열면 바로 입력할 수 있습니다. 설치·회원가입 없이 브라우저만 있으면 됩니다.
 
