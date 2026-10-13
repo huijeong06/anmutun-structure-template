@@ -22,7 +22,7 @@
     font-size:22px;font-weight:800;letter-spacing:-.01em;margin:0 0 2px;color:var(--green-d);
     outline:none;
   }
-  h1::before{content:"‹ ";color:var(--plum)} h1::after{content:" ›";color:var(--plum)}
+  #title:empty::before{content:"제목";color:#b4ac9c;font-weight:800}
   .sub{font-size:13px;color:var(--sub);margin:0}
   .bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:14px 0}
   button{
@@ -63,7 +63,7 @@
   .hint{font-size:12px;color:var(--sub);margin:12px 2px 0;line-height:1.6}
   .hint b{color:var(--green-d)}
   @media print{
-    @page{size:A4 landscape;margin:7mm}
+    @page{size:297mm 210mm landscape;margin:7mm}
     html,body{margin:0;padding:0;background:#fff;-webkit-print-color-adjust:exact;print-color-adjust:exact}
     .bar,.hint,.rownum .del{display:none!important}
     header{margin:0 0 5px}
@@ -90,8 +90,8 @@
 </head>
 <body>
 <header>
-  <h1 id="title" contenteditable="true" spellcheck="false">아무튼, ___</h1>
-  <p class="sub"><b style="color:var(--green-d)">제목(‹아무튼, ___›)을 클릭해 소재를 채우세요.</b> 시기별 챕터에 메인 플롯·서브플롯·공간·인물을 걸어 한 권의 지도를 짭니다.</p>
+  <h1 id="title" contenteditable="true" spellcheck="false"></h1>
+  <p class="sub">여기에 글 주제를 적어주세요 — 제목을 클릭해 입력. 시기별 챕터에 메인 플롯·서브플롯·공간·인물을 걸어 한 권의 지도를 짭니다.</p>
 </header>
 
 <div class="bar">
