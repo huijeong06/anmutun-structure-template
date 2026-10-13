@@ -471,9 +471,15 @@
 
   function saveFile(){
     const data = collect();
-    const payload = {id: Date.now().toString(36), at: new Date().toISOString(), data};
+    // 파일 이름 끝 번호 — 이 브라우저에서 저장할 때마다 0, 1, 2… (내 파일에서 다시 저장해도 이어서 센다)
+    let seq = 0;
+    try{ seq = parseInt(localStorage.getItem(BASE_KEY + "-seq"), 10); }catch(e){}
+    if(!(seq >= 0)) seq = 0;
+    if(EMBED && EMBED.seq >= seq) seq = EMBED.seq + 1;
+    try{ localStorage.setItem(BASE_KEY + "-seq", seq + 1); }catch(e){}
+    const payload = {id: Date.now().toString(36), seq, at: new Date().toISOString(), data};
     const json = JSON.stringify(payload).replace(/</g, "\\u003c");
-    const name = "HFK_글쓰는 OOO_글구조템플릿.html";
+    const name = "HFK_글쓰는 OOO_글구조템플릿_" + seq + ".html";
     const html = SRC.replace(/\/\*EMBED\*\/[\s\S]*?\/\*END\*\//, ()=> "/*EMBED*/" + json + "/*END*/");
     const a = document.createElement("a");
     a.href = URL.createObjectURL(new Blob([html], {type: "text/html;charset=utf-8"}));
