@@ -168,6 +168,7 @@
   <button onclick="addRow()">＋ 행 추가</button>
   <button class="ghost" onclick="delRow()">－ 마지막 행 빼기</button>
   <button class="ghost" onclick="clearAll()">전체 비우기</button>
+  <button id="barSave" onclick="saveFile()" hidden>💾 파일로 저장</button>
   <button onclick="window.print()">🖨 인쇄 / PDF</button>
   <span class="save" id="save">저장됨 · <b>자동</b></span>
 </div>
@@ -203,7 +204,7 @@
   행이 모자라면 <b>＋ 행 추가</b>, 특정 행을 빼려면 <b>행 번호에 마우스를 올려 ✕</b>(중간 행도 삭제), 맨 끝 행은 <b>－ 마지막 행 빼기</b>.
   인쇄는 가로 A4로 맞춰져 있어 <b>🖨 인쇄 / PDF</b>로 종이에 그대로 뽑을 수 있다. 목차는 보통 <b>15개 안팎</b> —
   첫 행은 <b>프롤로그</b>, 마지막 행은 <b>에필로그</b>로 둔다.<br>
-  다른 기기로 옮기거나 백업하려면 맨 위 <b>💾 내 파일로 저장</b>을 한 번 더 눌러 그때까지 쓴 내용을 새 파일로 남긴다.
+  다른 기기로 옮기거나 백업하려면 <b>💾 저장</b> 단추를 한 번 더 눌러 그때까지 쓴 내용을 새 파일로 남긴다.
 </p>
 
 <script>
@@ -309,8 +310,11 @@
     let raw = null;
     try{ raw = localStorage.getItem(KEY); }catch(e){}
     if(!raw && EMBED) raw = JSON.stringify(EMBED.data);
-    if(EMBED) document.getElementById("startT").innerHTML =
-      "<b>내 파일입니다 — 여기서 쓰면 자동 저장돼요.</b> 다른 기기로 옮기거나 백업할 땐 이 단추로 지금 내용을 새 파일로 남기세요.";
+    if(EMBED){
+      // 내 파일에서는 시작 안내를 걷고, 백업용 저장 단추만 도구줄에 둔다
+      document.getElementById("start").remove();
+      document.getElementById("barSave").hidden = false;
+    }
     if(raw){
       try{
         const d = JSON.parse(raw);
@@ -334,24 +338,26 @@
   }
 
   function saveFile(){
-    let n = 1;
-    try{
-      n = (parseInt(localStorage.getItem(BASE_KEY + "-seq")) || 0) + 1;
-      localStorage.setItem(BASE_KEY + "-seq", n);
-    }catch(e){ n = Date.now() % 1000; }
     const data = collect();
-    const payload = {id: Date.now().toString(36), n, at: new Date().toISOString(), data};
+    const payload = {id: Date.now().toString(36), at: new Date().toISOString(), data};
     const json = JSON.stringify(payload).replace(/</g, "\\u003c");
-    const html = SRC.replace(/\/\*EMBED\*\/[\s\S]*?\/\*END\*\//, ()=> "/*EMBED*/" + json + "/*END*/");
-    const name = ((data.title || "").trim().replace(/[\\/:*?"<>|\s]+/g, "-").slice(0, 40) || "구조표")
-      + "-" + String(n).padStart(2, "0") + ".html";
+    // 파일 이름 = 「제목 (저장일).html」, 제목이 비어 있으면 「전체 구조 (저장일).html」
+    const t = (data.title || "").replace(/\s+/g, " ").trim();
+    const d = new Date(), pad = x => String(x).padStart(2, "0");
+    const day = d.getFullYear() + "-" + pad(d.getMonth()+1) + "-" + pad(d.getDate());
+    const name = ((t.replace(/[\\/:*?"<>|]/g, "").slice(0, 60)) || "전체 구조") + " (" + day + ").html";
+    const esc = v => v.replace(/[&<>]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;"})[c]);
+    const html = SRC
+      .replace(/\/\*EMBED\*\/[\s\S]*?\/\*END\*\//, ()=> "/*EMBED*/" + json + "/*END*/")
+      .replace(/<title>[\s\S]*?<\/title>/, ()=> "<title>" + esc(t || "전체 구조") + "</title>");
     const a = document.createElement("a");
     a.href = URL.createObjectURL(new Blob([html], {type: "text/html;charset=utf-8"}));
     a.download = name;
     document.body.appendChild(a); a.click(); a.remove();
     setTimeout(()=> URL.revokeObjectURL(a.href), 2000);
     saveEl.innerHTML = "파일 저장 · <b>" + name + "</b>";
-    document.getElementById("startS").textContent = "✓ " + name + " — 다운로드 폴더에서 여세요";
+    const ss = document.getElementById("startS");
+    if(ss) ss.textContent = "✓ " + name + " — 다운로드 폴더에서 여세요";
   }
 
   init();
