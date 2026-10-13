@@ -214,6 +214,7 @@
     {name:"Space", w:110}, {name:"Character", w:110}
   ];
   let cols = DEFAULT_COLS.map(c=>({...c}));
+  const DEFAULT_NAME = i => (DEFAULT_COLS[i] && DEFAULT_COLS[i].name) || ("열 " + (i+1));
   // 💾 내 파일로 저장 — 저장된 사본에는 아래 EMBED 자리에 내용·번호가 구워진다
   const EMBED = /*EMBED*/null/*END*/;
   const SRC = "<!DOCTYPE html>\n" + document.documentElement.outerHTML;
@@ -267,7 +268,13 @@
       if(c.sp) th.className = "sp";
       const nm = document.createElement("span");
       nm.className = "hname"; nm.contentEditable = "true"; nm.spellcheck = false; nm.textContent = c.name;
-      nm.addEventListener("input", ()=>{ c.name = nm.textContent; save(); });
+      // 이름을 다 지운 채 칸을 벗어나면 직전 이름으로 되돌린다 — 빈 표 제목은 남기지 않는다
+      let prev = c.name;
+      nm.addEventListener("focus", ()=>{ prev = c.name; });
+      nm.addEventListener("input", ()=>{ if(nm.textContent.trim()){ c.name = nm.textContent; save(); } });
+      nm.addEventListener("blur", ()=>{
+        if(!nm.textContent.trim()){ nm.textContent = c.name = prev || DEFAULT_NAME(i); save(); }
+      });
       nm.addEventListener("keydown", e=>{ if(e.key==="Enter"){ e.preventDefault(); nm.blur(); }});
       const x = document.createElement("button");
       x.className = "cdel"; x.type = "button"; x.textContent = "✕"; x.title = "이 열 삭제";
@@ -400,7 +407,10 @@
         if(d.title) document.getElementById("title").innerText = d.title;
         (d.rec||[]).forEach(v=> addRec(v));
         if(d.intro) introEl.value = d.intro;
-        if(Array.isArray(d.cols) && d.cols.length) cols = d.cols;
+        if(Array.isArray(d.cols) && d.cols.length){
+          cols = d.cols;
+          cols.forEach((c,i)=>{ if(!String(c.name||"").trim()) c.name = DEFAULT_NAME(i); });
+        }
         renderHead();
         (d.rows||[]).forEach((r,i)=> body.appendChild(makeRow(i+1, r)));
       }catch(e){ cols = DEFAULT_COLS.map(c=>({...c})); renderHead(); seed(); }
