@@ -45,7 +45,8 @@
   .guide span b{color:var(--green-d)}
   .save b{color:var(--green-l)}
   .wrap{overflow-x:auto;border:1px solid var(--line);border-radius:10px;background:var(--chalk)}
-  table{border-collapse:collapse;width:100%;min-width:1400px;font-size:12.5px;line-height:1.45}
+  table{border-collapse:collapse;width:100%;min-width:1400px;table-layout:fixed;font-size:12.5px;line-height:1.45}
+  td div.cell{overflow-wrap:anywhere}
   th,td{border:1px solid var(--line);padding:0;vertical-align:top}
   thead th{
     background:var(--green);color:var(--parchment);font-weight:700;font-size:12px;
@@ -72,10 +73,16 @@
   thead th .hname{display:block;outline:none;min-width:2em;padding-right:16px;cursor:text}
   thead th .hname:focus{background:rgba(255,255,255,.14);border-radius:4px;box-shadow:0 0 0 2px var(--sage)}
   thead th .cdel{
-    position:absolute;right:2px;top:2px;width:18px;height:18px;display:none;border:none;
+    position:absolute;right:8px;top:2px;width:18px;height:18px;display:none;border:none;
     background:transparent;color:var(--parchment);font-size:12px;line-height:1;cursor:pointer;padding:0;border-radius:4px;
   }
   thead th:hover .cdel{display:block}
+  thead th{overflow:visible}
+  /* 열 너비 — 표 제목 오른쪽 경계를 끌어 조절, 두 번 누르면 기본 폭 */
+  thead th .rz{position:absolute;top:0;right:-4px;width:8px;height:100%;cursor:col-resize;z-index:3}
+  thead th .rz::after{content:"";position:absolute;left:3px;top:20%;height:60%;width:2px;border-radius:1px;background:transparent}
+  thead th .rz:hover::after,body.resizing thead th .rz.on::after{background:var(--sage)}
+  body.resizing{cursor:col-resize;user-select:none}
   thead th .cdel:hover{background:var(--plum);color:#fff}
   /* 브런치북 — 추천 대상 · 소개 */
   .book{display:grid;grid-template-columns:minmax(260px,1fr) minmax(320px,1.6fr);gap:12px;margin:14px 0 4px}
@@ -132,7 +139,7 @@
     /* 폭 100% 고정 레이아웃 — 열 너비를 비율로 재계산해 가로 한 장에 맞춘다 */
     table{min-width:0!important;width:100%!important;table-layout:fixed;font-size:calc(100vw*8/1077);line-height:1.3}
     col{width:var(--pw)!important}
-    thead th .cdel{display:none!important}
+    thead th .cdel,thead th .rz{display:none!important}
     thead th .hname{padding-right:0}
     th,td{border:.5px solid #c9c2b2!important}
     thead th{position:static!important;padding:calc(100vw*5/1077) calc(100vw*5/1077);font-size:calc(100vw*8/1077);height:calc(100vw*22.7/1077);
@@ -175,15 +182,16 @@
 <div class="bar">
   <button onclick="addRow()">＋ 행 추가</button>
   <button onclick="addCol()">＋ 열 추가</button>
-  <button class="ghost" onclick="clearAll()">전체 비우기</button>
   <button id="barSave" onclick="saveFile()" hidden>💾 파일로 저장</button>
   <button onclick="window.print()">🖨 인쇄 / PDF</button>
+  <button class="ghost" onclick="clearAll()">🗑 전체 비우기</button>
   <div class="guide">
     <b>쓰는 법</b>
     <span>칸 클릭 → 바로 입력 · 자동 저장</span>
     <span>표 제목: 클릭해 고치기</span>
     <span>행 빼기: <b>No.</b>에 마우스 → <b>✕</b></span>
     <span>열 빼기: 표 제목에 마우스 → <b>✕</b></span>
+    <span>열 너비: 표 제목 오른쪽 경계를 끌기</span>
     <span>목차: 첫 행 <b>프롤로그</b>, 끝 행 <b>에필로그</b></span>
   </div>
   <span class="save" id="save">저장됨 · <b>자동</b></span>
@@ -264,9 +272,34 @@
       const x = document.createElement("button");
       x.className = "cdel"; x.type = "button"; x.textContent = "✕"; x.title = "이 열 삭제";
       x.addEventListener("click", ()=> delCol(i));
-      th.appendChild(nm); th.appendChild(x); hr.appendChild(th);
+      const rz = document.createElement("span");
+      rz.className = "rz"; rz.title = "끌어서 너비 조절 · 두 번 누르면 기본 폭";
+      rz.addEventListener("pointerdown", e=> startResize(e, i, col, rz));
+      rz.addEventListener("dblclick", ()=>{
+        const d = DEFAULT_COLS.find(x=>x.name===c.name);
+        c.w = d ? d.w : 120; renderHead(); save();
+      });
+      th.appendChild(nm); th.appendChild(x); th.appendChild(rz); hr.appendChild(th);
     });
     document.getElementById("grid").style.minWidth = Math.max(600, 40 + total) + "px";
+  }
+
+  function startResize(e, i, col, rz){
+    e.preventDefault();
+    const c = cols[i], x0 = e.clientX, w0 = c.w;
+    const others = cols.reduce((a,o,k)=> k===i ? a : a+o.w, 0);
+    rz.classList.add("on"); document.body.classList.add("resizing");
+    const move = ev=>{
+      c.w = Math.max(50, Math.round(w0 + ev.clientX - x0));
+      col.style.width = c.w + "px";
+      document.getElementById("grid").style.minWidth = Math.max(600, 40 + others + c.w) + "px";
+    };
+    const up = ()=>{
+      window.removeEventListener("pointermove", move); window.removeEventListener("pointerup", up);
+      document.body.classList.remove("resizing");
+      renderHead(); save();
+    };
+    window.addEventListener("pointermove", move); window.addEventListener("pointerup", up);
   }
 
   function addCol(){
