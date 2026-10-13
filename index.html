@@ -60,12 +60,45 @@
   /* column widths */
   col.c-no{width:40px} col.c-time{width:70px} col.c-ch{width:150px} col.c-main{width:300px}
   col.c-sp{width:120px} col.c-space{width:110px} col.c-char{width:110px}
+  /* 브런치북 — 추천 대상 · 소개 */
+  .book{display:grid;grid-template-columns:minmax(260px,1fr) minmax(320px,1.6fr);gap:12px;margin:14px 0 4px}
+  .card{border:1px solid var(--line);border-radius:10px;background:var(--chalk);padding:14px 16px}
+  .card-h{display:flex;align-items:baseline;justify-content:space-between;margin:0 0 10px}
+  .card-h h2{font-size:14px;font-weight:800;color:var(--green-d);margin:0}
+  .count{font-size:12px;color:var(--sub);font-variant-numeric:tabular-nums}
+  .count b{color:var(--green-d)} .count.over b{color:var(--plum)}
+  .rec{display:flex;flex-direction:column;gap:6px;margin:0 0 8px;padding:0;list-style:none}
+  .rec li{display:flex;gap:6px;align-items:center}
+  .rec input{
+    flex:1;font:inherit;font-size:13.5px;color:var(--ink);background:#fff;
+    border:1px solid var(--line);border-radius:7px;padding:8px 10px;outline:none;
+  }
+  .rec input:focus,.intro:focus{border-color:var(--sage);box-shadow:0 0 0 2px rgba(159,186,175,.35)}
+  .rec input::placeholder,.intro::placeholder{color:#b4ac9c}
+  .rec .x{
+    border:none;background:transparent;color:var(--sub);font-size:18px;line-height:1;
+    width:30px;height:30px;padding:0;border-radius:6px;flex:none;
+  }
+  .rec .x:hover{background:var(--plum);color:#fff}
+  .add{width:100%;border-color:var(--line);color:var(--green-d)}
+  .intro{
+    width:100%;min-height:150px;resize:vertical;font:inherit;font-size:13.5px;line-height:1.7;
+    color:var(--ink);background:#fff;border:1px solid var(--line);border-radius:7px;padding:10px 12px;outline:none;
+  }
+  .print-only{display:none}
+  @media (max-width:720px){.book{grid-template-columns:1fr}}
   .hint{font-size:12px;color:var(--sub);margin:12px 2px 0;line-height:1.6}
   .hint b{color:var(--green-d)}
   @media print{
     @page{size:297mm 210mm landscape;margin:7mm}
     html,body{margin:0;padding:0;background:#fff;-webkit-print-color-adjust:exact;print-color-adjust:exact}
     .bar,.hint,.rownum .del{display:none!important}
+    .book{grid-template-columns:1fr 1.8fr;gap:5px;margin:0 0 5px}
+    .card{padding:4px 7px;border-radius:0;border:.5px solid #c9c2b2}
+    .card-h{margin:0 0 2px} .card-h h2{font-size:8px} .count{font-size:7px}
+    .rec .x,.add,.rec input,.intro{display:none!important}
+    .print-only{display:block;font-size:7.6px;line-height:1.35;white-space:pre-wrap;margin:0}
+    ul.print-only{padding-left:10px}
     header{margin:0 0 5px}
     h1{font-size:14px;margin:0}
     .sub{font-size:9px}
@@ -93,6 +126,21 @@
   <h1 id="title" contenteditable="true" spellcheck="false"></h1>
   <p class="sub">여기에 글 주제를 적어주세요 — 제목을 클릭해 입력. 시기별 챕터에 메인 플롯·서브플롯·공간·인물을 걸어 한 권의 지도를 짭니다.</p>
 </header>
+
+<section class="book">
+  <div class="card">
+    <div class="card-h"><h2>이런 분에게 추천합니다!</h2></div>
+    <ul class="rec" id="rec"></ul>
+    <ul class="print-only" id="recPrint"></ul>
+    <button class="ghost add" type="button" onclick="addRec('', true)">＋ 추가하기</button>
+  </div>
+  <div class="card">
+    <div class="card-h"><h2>브런치북 소개</h2><span class="count" id="count"><b>0</b> / 500</span></div>
+    <textarea class="intro" id="intro" maxlength="500" spellcheck="false"
+      placeholder="소개만으로도 매력을 느낄 수 있도록 브런치북을 500자로 압축하여 표현해 보세요."></textarea>
+    <p class="print-only" id="introPrint"></p>
+  </div>
+</section>
 
 <div class="bar">
   <button onclick="addRow()">＋ 행 추가</button>
@@ -166,12 +214,48 @@
     [...body.querySelectorAll("tr")].forEach((tr,i)=> tr.querySelector(".rownum .n").textContent = i+1);
   }
 
+  const recEl = document.getElementById("rec");
+  const introEl = document.getElementById("intro");
+  const REC_PH = "(예시) IT 회사에서 조직 문화를 고민하는 팀장";
+
+  function addRec(v, focus){
+    const li = document.createElement("li");
+    const inp = document.createElement("input");
+    inp.type = "text"; inp.value = v || ""; inp.placeholder = REC_PH; inp.spellcheck = false;
+    inp.addEventListener("input", save);
+    inp.addEventListener("keydown", e=>{ if(e.key==="Enter" && !e.isComposing){ e.preventDefault(); addRec("", true); }});
+    const x = document.createElement("button");
+    x.className = "x"; x.type = "button"; x.textContent = "×"; x.title = "이 항목 삭제";
+    x.addEventListener("click", ()=>{
+      if(recEl.children.length>1) li.remove(); else inp.value = "";
+      save();
+    });
+    li.appendChild(inp); li.appendChild(x); recEl.appendChild(li);
+    if(focus){ inp.focus(); save(); }
+  }
+
+  function updateCount(){
+    const n = [...introEl.value].length;
+    const c = document.getElementById("count");
+    c.innerHTML = "<b>"+n+"</b> / 500";
+    c.classList.toggle("over", n>=500);
+  }
+
+  function syncPrint(){
+    const rp = document.getElementById("recPrint"); rp.innerHTML = "";
+    [...recEl.querySelectorAll("input")].map(i=>i.value.trim()).filter(Boolean)
+      .forEach(v=>{ const li=document.createElement("li"); li.textContent=v; rp.appendChild(li); });
+    document.getElementById("introPrint").textContent = introEl.value;
+  }
+
   function collect(){
     const title = document.getElementById("title").innerText;
+    const rec = [...recEl.querySelectorAll("input")].map(i=>i.value);
+    const intro = introEl.value;
     const rows = [...body.querySelectorAll("tr")].map(tr =>
       [...tr.querySelectorAll(".cell")].map(c => c.innerHTML)
     );
-    return {title, rows};
+    return {title, rec, intro, rows};
   }
 
   let t;
@@ -188,6 +272,8 @@
   function delRow(){ if(body.children.length>1){ body.lastElementChild.remove(); save(); } }
   function clearAll(){
     if(!confirm("모든 칸을 비웁니다. (행 수는 유지)")) return;
+    recEl.querySelectorAll("input").forEach(i=>i.value="");
+    introEl.value = ""; updateCount();
     body.querySelectorAll(".cell").forEach(c=>c.innerHTML="");
     save();
   }
@@ -198,12 +284,18 @@
       try{
         const d = JSON.parse(raw);
         if(d.title) document.getElementById("title").innerText = d.title;
+        (d.rec||[]).forEach(v=> addRec(v));
+        if(d.intro) introEl.value = d.intro;
         (d.rows||[]).forEach((r,i)=> body.appendChild(makeRow(i+1, r)));
       }catch(e){ seed(); }
     } else { seed(); }
     if(body.children.length===0) seed();
     document.getElementById("title").addEventListener("input", save);
+    if(recEl.children.length===0) addRec("");
+    introEl.addEventListener("input", ()=>{ updateCount(); save(); });
+    updateCount();
   }
+  window.addEventListener("beforeprint", syncPrint);
 
   function seed(){
     body.innerHTML = "";
