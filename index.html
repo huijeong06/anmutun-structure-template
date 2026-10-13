@@ -18,6 +18,13 @@
     padding:28px 22px 60px;
   }
   header{max-width:none;margin:0 0 14px}
+  .start{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin:0 0 18px;padding:12px 14px;
+    border:1px solid var(--green);border-left:4px solid var(--green);border-radius:10px;background:var(--chalk)}
+  .start .save-btn{font-size:14px;padding:9px 16px;background:var(--green);color:var(--chalk)}
+  .start .save-btn:hover{background:var(--green-d)}
+  .start-t{margin:0;font-size:13.5px;line-height:1.6;color:var(--ink);flex:1;min-width:240px}
+  .start-t b{color:var(--green-d)}
+  .start-s{font-size:12.5px;color:var(--green-d);font-weight:700}
   h1{
     font-size:22px;font-weight:800;letter-spacing:-.01em;margin:0 0 2px;color:var(--green-d);
     outline:none;
@@ -67,7 +74,11 @@
   .card-h h2{font-size:14px;font-weight:800;color:var(--green-d);margin:0}
   .count{font-size:12px;color:var(--sub);font-variant-numeric:tabular-nums}
   .count b{color:var(--green-d)} .count.over b{color:var(--plum)}
-  .rec{display:flex;flex-direction:column;gap:6px;margin:0 0 8px;padding:0;list-style:none}
+  .rec{display:flex;flex-direction:column;gap:6px;margin:0 0 8px;padding:0 2px 0 0;list-style:none}
+  /* 행 높이는 소개 박스가 정하고, 추천 목록은 그 안에서 스크롤 */
+  .card.recs{height:0;min-height:100%;display:flex;flex-direction:column}
+  .card.recs .rec{flex:1;min-height:0;overflow-y:auto}
+  .card.recs .add{flex:none}
   .rec li{display:flex;gap:6px;align-items:center}
   .rec input{
     flex:1;font:inherit;font-size:13.5px;color:var(--ink);background:#fff;
@@ -86,17 +97,22 @@
     color:var(--ink);background:#fff;border:1px solid var(--line);border-radius:7px;padding:10px 12px;outline:none;
   }
   .print-only{display:none}
-  @media (max-width:720px){.book{grid-template-columns:1fr}}
+  @media (max-width:720px){.book{grid-template-columns:1fr} .card.recs{height:auto;min-height:0}}
   .hint{font-size:12px;color:var(--sub);margin:12px 2px 0;line-height:1.6}
   .hint b{color:var(--green-d)}
+  @page{size:A4 landscape;margin:6mm}
   @media print{
-    @page{size:297mm 210mm landscape;margin:7mm}
     html,body{margin:0;padding:0;background:#fff;-webkit-print-color-adjust:exact;print-color-adjust:exact}
-    .bar,.hint,.rownum .del{display:none!important}
+    /* A4 가로(297×210) − 여백 6mm = 285×198mm 한 장을 가로·세로 모두 채운다 */
+    body{width:285mm;height:198mm;display:flex;flex-direction:column;overflow:hidden}
+    .wrap{flex:1;min-height:0;width:285mm}
+    table{height:100%}
+    .bar,.hint,.rownum .del,.start,.sub{display:none!important}
+    .card.recs{height:auto;min-height:0}
     .book{grid-template-columns:1fr 1.8fr;gap:5px;margin:0 0 5px}
     .card{padding:4px 7px;border-radius:0;border:.5px solid #c9c2b2}
     .card-h{margin:0 0 2px} .card-h h2{font-size:8px} .count{font-size:7px}
-    .rec .x,.add,.rec input,.intro{display:none!important}
+    .rec,.add,.intro{display:none!important}
     .print-only{display:block;font-size:7.6px;line-height:1.35;white-space:pre-wrap;margin:0}
     ul.print-only{padding-left:10px}
     header{margin:0 0 5px}
@@ -104,13 +120,13 @@
     .sub{font-size:9px}
     .wrap{border:none;border-radius:0;overflow:visible}
     /* 폭 100% 고정 레이아웃 — 열 너비를 비율로 재계산해 가로 한 장에 맞춘다 */
-    table{min-width:0!important;width:100%!important;table-layout:fixed;font-size:7.6px;line-height:1.25}
+    table{min-width:0!important;width:100%!important;table-layout:fixed;font-size:8px;line-height:1.3}
     col{width:auto!important}
     col.c-no{width:2.6%!important} col.c-time{width:5.2%!important}
     col.c-ch{width:11%!important} col.c-main{width:20%!important}
     col.c-sp{width:8.4%!important} col.c-space{width:8.4%!important} col.c-char{width:8.4%!important}
     th,td{border:.5px solid #c9c2b2!important}
-    thead th{position:static!important;padding:4px 4px;font-size:7.4px;
+    thead th{position:static!important;padding:5px 5px;font-size:8px;height:6mm;
       background:#24463c!important;color:#f4f1ea!important}
     thead th.sp{background:#1b362e!important}
     td div.cell{min-height:0!important;padding:3px 4px;word-break:break-word;white-space:normal}
@@ -122,13 +138,19 @@
 </style>
 </head>
 <body>
+<div class="start" id="start">
+  <button class="save-btn" onclick="saveFile()">💾 내 파일로 저장</button>
+  <p class="start-t" id="startT"><b>쓰기 전에 먼저 저장하세요.</b> ① 이 단추를 누르면 나만의 파일이 내려받아집니다 →
+    ② 다운로드 폴더에서 그 파일을 열어 거기서 쓰면 됩니다.</p>
+  <span class="start-s" id="startS"></span>
+</div>
 <header>
   <h1 id="title" contenteditable="true" spellcheck="false"></h1>
   <p class="sub">여기에 글 주제를 적어주세요 — 제목을 클릭해 입력. 시기별 챕터에 메인 플롯·서브플롯·공간·인물을 걸어 한 권의 지도를 짭니다.</p>
 </header>
 
 <section class="book">
-  <div class="card">
+  <div class="card recs">
     <div class="card-h"><h2>이런 분에게 추천합니다!</h2></div>
     <ul class="rec" id="rec"></ul>
     <ul class="print-only" id="recPrint"></ul>
@@ -146,7 +168,6 @@
   <button onclick="addRow()">＋ 행 추가</button>
   <button class="ghost" onclick="delRow()">－ 마지막 행 빼기</button>
   <button class="ghost" onclick="clearAll()">전체 비우기</button>
-  <button onclick="saveFile()">💾 내 파일로 저장</button>
   <button onclick="window.print()">🖨 인쇄 / PDF</button>
   <span class="save" id="save">저장됨 · <b>자동</b></span>
 </div>
@@ -182,8 +203,7 @@
   행이 모자라면 <b>＋ 행 추가</b>, 특정 행을 빼려면 <b>행 번호에 마우스를 올려 ✕</b>(중간 행도 삭제), 맨 끝 행은 <b>－ 마지막 행 빼기</b>.
   인쇄는 가로 A4로 맞춰져 있어 <b>🖨 인쇄 / PDF</b>로 종이에 그대로 뽑을 수 있다. 목차는 보통 <b>15개 안팎</b> —
   첫 행은 <b>프롤로그</b>, 마지막 행은 <b>에필로그</b>로 둔다.<br>
-  <b>💾 내 파일로 저장</b>을 누르면 지금까지 쓴 내용이 담긴 <b>나만의 페이지</b>(번호가 붙은 html 파일 한 개)가 내려받아진다.
-  그 파일을 더블클릭하면 언제 어디서든 그대로 열려 이어 쓸 수 있다 — 다른 기기·시크릿 창·기록 삭제 뒤에는 이 화면이 비어 보이니 파일로 남겨 두자.
+  다른 기기로 옮기거나 백업하려면 맨 위 <b>💾 내 파일로 저장</b>을 한 번 더 눌러 그때까지 쓴 내용을 새 파일로 남긴다.
 </p>
 
 <script>
@@ -289,6 +309,8 @@
     let raw = null;
     try{ raw = localStorage.getItem(KEY); }catch(e){}
     if(!raw && EMBED) raw = JSON.stringify(EMBED.data);
+    if(EMBED) document.getElementById("startT").innerHTML =
+      "<b>내 파일입니다 — 여기서 쓰면 자동 저장돼요.</b> 다른 기기로 옮기거나 백업할 땐 이 단추로 지금 내용을 새 파일로 남기세요.";
     if(raw){
       try{
         const d = JSON.parse(raw);
@@ -329,6 +351,7 @@
     document.body.appendChild(a); a.click(); a.remove();
     setTimeout(()=> URL.revokeObjectURL(a.href), 2000);
     saveEl.innerHTML = "파일 저장 · <b>" + name + "</b>";
+    document.getElementById("startS").textContent = "✓ " + name + " — 다운로드 폴더에서 여세요";
   }
 
   init();
