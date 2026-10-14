@@ -84,6 +84,18 @@
   body.resizing, body.resizing *{cursor:col-resize!important;user-select:none}
   #rzLine{position:fixed;width:2px;margin-left:-1px;background:var(--sage);pointer-events:none;display:none;z-index:5}
   thead th .cdel:hover{background:var(--plum);color:#fff}
+  /* 열 옮기기 — 표 제목 왼쪽 ⠿를 잡아 좌우로 끌면 놓은 자리로 열이 옮겨 간다 */
+  thead th:not(.rownum){padding-left:30px}
+  thead th .grip{
+    position:absolute;left:6px;top:50%;transform:translateY(-50%);width:22px;height:28px;display:none;border:none;
+    background:transparent;color:var(--parchment);font-size:17px;line-height:28px;text-align:center;
+    cursor:grab;padding:0;border-radius:5px;touch-action:none;
+  }
+  thead th:hover .grip{display:block}
+  thead th .grip:hover{background:rgba(255,255,255,.18)}
+  thead th.dragging{opacity:.55}
+  body.moving, body.moving *{cursor:grabbing!important;user-select:none}
+  #mvLine{position:fixed;width:3px;margin-left:-1.5px;background:var(--plum);pointer-events:none;display:none;z-index:6}
   /* 브런치북 — 추천 대상 · 소개 */
   .book{display:grid;grid-template-columns:minmax(260px,1fr) minmax(320px,1.6fr);gap:12px;margin:14px 0 4px}
   .card{border:1px solid var(--line);border-radius:10px;background:var(--chalk);padding:14px 16px}
@@ -139,7 +151,8 @@
     /* 폭 100% 고정 레이아웃 — 열 너비를 비율로 재계산해 가로 한 장에 맞춘다 */
     table{min-width:0!important;width:100%!important;table-layout:fixed;font-size:calc(100vw*8/1077);line-height:1.3}
     col{width:var(--pw)!important}
-    thead th .cdel,#rzLine{display:none!important}
+    thead th .cdel,thead th .grip,#rzLine,#mvLine{display:none!important}
+    thead th:not(.rownum){padding-left:calc(100vw*5/1077)!important}
     thead th .hname{padding-right:0}
     th,td{border:.5px solid #c9c2b2!important}
     thead th{position:static!important;padding:calc(100vw*5/1077) calc(100vw*5/1077);font-size:calc(100vw*8/1077);height:calc(100vw*22.7/1077);
@@ -191,6 +204,7 @@
     <span>표 제목: 클릭해 수정</span>
     <span>행 삭제: <b>No.</b> 오른쪽 위 <b>✕</b></span>
     <span>열 삭제: 표 제목 오른쪽 <b>✕</b></span>
+    <span>열 옮기기: 표 제목 왼쪽 <b>⠿</b> 끌기</span>
     <span>열 너비 조정 가능</span>
     <span>목차: 첫 행 <b>프롤로그</b> · 끝 행 <b>에필로그</b></span>
   </div>
@@ -279,7 +293,10 @@
       const x = document.createElement("button");
       x.className = "cdel"; x.type = "button"; x.textContent = "✕"; x.title = "이 열 삭제";
       x.addEventListener("click", ()=> delCol(i));
-      th.appendChild(nm); th.appendChild(x); hr.appendChild(th);
+      const g = document.createElement("button");
+      g.className = "grip"; g.type = "button"; g.textContent = "⠿"; g.title = "끌어서 열 옮기기";
+      g.addEventListener("pointerdown", e=> startMove(e, i));
+      th.appendChild(g); th.appendChild(nm); th.appendChild(x); hr.appendChild(th);
     });
     document.getElementById("grid").style.minWidth = Math.max(600, 40 + total) + "px";
   }
@@ -347,6 +364,56 @@
       renderHead(); save();
     };
     window.addEventListener("pointermove", move); window.addEventListener("pointerup", up);
+  }
+
+  // 열 옮기기 — 끄는 동안 놓일 자리에 세로선, 놓으면 cols와 모든 행의 칸을 같은 자리로 옮긴다
+  const mvLine = document.createElement("div"); mvLine.id = "mvLine"; document.body.appendChild(mvLine);
+  function startMove(e, i){
+    e.preventDefault(); e.stopPropagation();
+    const hr = document.getElementById("hr"), wrap = grid.parentElement;
+    const ths = () => [...hr.children].slice(1);
+    ths()[i].classList.add("dragging");
+    document.body.classList.add("moving");
+    let slot = i, lastX = e.clientX, timer = null;
+    const place = x=>{
+      const list = ths();
+      slot = list.filter(th=>{ const r = th.getBoundingClientRect(); return r.left + r.width/2 < x; }).length;
+      const r = slot < list.length ? list[slot].getBoundingClientRect() : list[list.length-1].getBoundingClientRect();
+      const g = grid.getBoundingClientRect(), w = wrap.getBoundingClientRect();
+      mvLine.style.left = (slot < list.length ? r.left : r.right) + "px";
+      mvLine.style.top = Math.max(g.top, w.top, 0) + "px";
+      mvLine.style.height = (Math.min(g.bottom, w.bottom, innerHeight) - Math.max(g.top, w.top, 0)) + "px";
+      mvLine.style.display = "block";
+    };
+    // 표 가장자리 가까이 끌면 옆으로 저절로 스크롤
+    const edge = ()=>{
+      const w = wrap.getBoundingClientRect();
+      const d = lastX < w.left + 40 ? -18 : lastX > w.right - 40 ? 18 : 0;
+      if(d){ wrap.scrollLeft += d; place(lastX); }
+    };
+    const move = ev=>{ lastX = ev.clientX; place(lastX); };
+    const end = ok=>{
+      clearInterval(timer);
+      window.removeEventListener("pointermove", move); window.removeEventListener("pointerup", up);
+      window.removeEventListener("keydown", esc);
+      document.body.classList.remove("moving"); mvLine.style.display = "none";
+      let to = slot > i ? slot - 1 : slot;
+      if(ok && to !== i){
+        const [c] = cols.splice(i, 1); cols.splice(to, 0, c);
+        body.querySelectorAll("tr").forEach(tr=>{
+          const cell = tr.children[i+1]; cell.remove();
+          tr.insertBefore(cell, tr.children[to+1] || null);
+        });
+        save();
+      }
+      renderHead();
+    };
+    const up = ()=> end(true);
+    const esc = ev=>{ if(ev.key==="Escape") end(false); };
+    window.addEventListener("pointermove", move); window.addEventListener("pointerup", up);
+    window.addEventListener("keydown", esc);
+    timer = setInterval(edge, 30);
+    place(e.clientX);
   }
 
   function addCol(){
